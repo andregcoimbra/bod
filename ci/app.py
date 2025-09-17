@@ -10,11 +10,11 @@ data = pd.DataFrame()
 ranking_ic = []
 
 st.set_page_config(
-    page_title="Software-BoD",
+    page_title="S-CI-BoD",
     page_icon="📉"
 )
 
-st.title('📉 Software for Composite Indicators using Benefit of the Doubt - BoD')
+st.title('📉  Software for building subjective-objective composite indicators using Benefit-of-the-Doubt: So-called S-CI-BoD')
 st.header("Build composite indicators with the Benefit of the Doubt method and uncertainty analysis")
 
 st.markdown(
@@ -107,6 +107,7 @@ if uploaded_file is not None:
     if calculate_button:
         if not selected_columns:
             st.error("Error: You need to select at least one column to continue!")
+            st.stop()
         else:
             st.subheader("Results")
             # Mostrar o indicador de carregamento
@@ -127,6 +128,10 @@ if uploaded_file is not None:
                 #verificar se bounds estas entre 0 e 1
                 if any(min_val < 0 or max_val > 1 for min_val, max_val in bounds):
                     st.error("Error: Min/Max values must be between 0 and 1.")
+                    st.stop()
+                elif sum(min_val for min_val, _ in bounds) > 1:
+                    st.error("Error: The sum of the minimum values ​​cannot be greater than 1.")
+                    st.stop()
                 else:
                     model = BOD_Calculation(data, bounds=bounds)
 
@@ -134,23 +139,29 @@ if uploaded_file is not None:
                     result = model.run()
                 except ValueError as e:
                     st.error(f"Error: {str(e)}")
+                    st.stop()
 
                 # Organizar os resultados
                 filtered_df = pd.DataFrame(result)
 
 
                 if labels_column.strip() != "Choose an option":
-                    filtered_df.index = df[labels_column]
+                    filtered_df[labels_column] = df[labels_column].astype(str).tolist()
                 else:
-                    filtered_df.index = ["DMU " + str(i+1) for i in df.index]
+                    labels_column = "DMU"
+                    filtered_df[labels_column] = ["DMU " + str(i+1) for i in df.index]
                 
                 filtered_df.sort_values(by="ci", ascending=False, inplace=True)
+
+                # Reorganiza colunas: coloca labels_column em primeiro
+                cols = [labels_column] + [c for c in filtered_df.columns if c != labels_column]
+                filtered_df = filtered_df[cols]
 
                 # Formatar os pesos
                 filtered_df['weights'] = filtered_df['weights'].apply(lambda x: [f"{i:.3f}" for i in x])
 
                 # Exibir a tabela
-                st.dataframe(filtered_df)
+                st.dataframe(filtered_df, hide_index=True)
 
                 # Gerar um arquivo Excel para download
                 excel_buffer = io.BytesIO()
@@ -164,11 +175,24 @@ if uploaded_file is not None:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
+                labels = filtered_df[labels_column].astype(str).tolist()
+
                 # Gráfico de Dispersão
-                fig = px.scatter(filtered_df, 
-                                    y="ci", 
-                                    title="BoD - Composite Indicators",
-                                    labels={"ci": "CI"})
+                fig = px.scatter(
+                    filtered_df,
+                    x=labels_column,
+                    y="ci",
+                    title="BoD - Composite Indicators",
+                    labels={"ci": "CI"}
+                )
+
+                fig.update_xaxes(
+                    type="category",
+                    categoryorder="array",
+                    categoryarray=labels,
+                    tickmode="array",
+                    tickvals=labels,
+                )
                 st.plotly_chart(fig)
 
                 # Histograma
