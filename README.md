@@ -1,6 +1,6 @@
 # Software for building subjective-objective composite indicators using Benefit-of-the-Doubt: So-called S-CI-BoD
 ## Description
-The software is an interactive software for building composite indicators using BoD method and uncertainty analysis. The application is built with Streamlit and allows users to import data, configure parameters, and obtain results visually and intuitively.
+The software is an interactive tool for building composite indicators using the BoD method. The application is built with Streamlit and allows users to import data, configure parameters, and obtain results visually and intuitively.
 
 ## How to Use
 1. **Requirements**
