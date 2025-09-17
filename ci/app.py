@@ -15,7 +15,6 @@ st.set_page_config(
 )
 
 st.title('📉  Software for building subjective-objective composite indicators using Benefit-of-the-Doubt: So-called S-CI-BoD')
-st.header("Build composite indicators with the Benefit of the Doubt method and uncertainty analysis")
 
 st.markdown(
     f"""
